@@ -48,6 +48,7 @@ export function App() {
         messages: [{ role: "user", content: text }],
       },{
         streamMode: 'messages',
+        configurable: { thread_id: "default-thread" },
       });
 
       // 流式请求处理
