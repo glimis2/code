@@ -21,6 +21,8 @@ export function App() {
   // 流式请求数据
   let fullText = ""
   const [streamingText, setStreamingText] = useState("");
+  // 历史数据
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // 退出
   useInput((_input, key) => {
@@ -36,8 +38,12 @@ export function App() {
       }
 
       // 获取主agent
-      const agent =await getAgent();
+      const agent = await getAgent();
+
+      
       // 拼接信息
+      setMessages((prev) => [...prev, { role: "user", content: text }]);
+
       const response = await agent.stream({
         messages: [{ role: "user", content: text }],
       },{
@@ -50,6 +56,10 @@ export function App() {
         fullText += messageChunk.content 
         setStreamingText(fullText);  
       }
+
+      setStreamingText("");  
+      setMessages((prev) => [...prev, { role: "assistant", content: fullText }]);
+
     } catch (error) {
       console.error("在handleSubmit中捕获到:", error)
     }
@@ -93,6 +103,7 @@ export function App() {
 
 
       <ChatView
+        messages = {messages}
         streamingText={streamingText}
       />
 

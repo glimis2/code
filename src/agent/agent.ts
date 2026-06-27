@@ -1,9 +1,9 @@
+import { InMemoryChatMessageHistory } from '@langchain/core/chat_history';
 import 'dotenv/config';
-import { createAgent, initChatModel} from 'langchain';
+import { createAgent, createMiddleware, initChatModel} from 'langchain';
 
 
-
-
+  
 export async function getAgent() {
 
   const llm = await initChatModel(process.env.LLM_MODELNAME || 'gpt-4o', {
@@ -17,5 +17,6 @@ export async function getAgent() {
   return createAgent({
     model: llm
   });
+
 }
 
