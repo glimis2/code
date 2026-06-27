@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm add *)",
+      "WebFetch(langchain-ai.github.io)",
+      "Bash(pnpm list *)"
+    ]
+  },
+  "$version": 4
+}

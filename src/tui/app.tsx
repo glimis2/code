@@ -4,6 +4,7 @@ import { render, Text, Box, useInput, useApp } from 'ink';
 import TextInput from 'ink-text-input';
 import { ChatView, ChatMessage } from './chat.tsx'
 import { initChatModel } from 'langchain';
+import { getAgent } from '../agent/agent.ts';
 
 const QWEN_LOGO = `
  ██╗   ██╗ ██████╗ ██╗   ██╗
@@ -34,28 +35,20 @@ export function App() {
         setValue('');
       }
 
-      const llm =await initChatModel(process.env.LLM_MODELNAME, {
-          modelProvider: process.env.LLM_PROVIDER,
-          configuration: {
-              baseURL: process.env.LLM_BASE_URL, // DeepSeek 接口地址
-          },
-          apiKey: process.env.LLM_API_KEY,
-          streaming: true,
+      // 获取主agent
+      const agent =await getAgent();
+      // 拼接信息
+      const response = await agent.stream({
+        messages: [{ role: "user", content: text }],
+      },{
+        streamMode: 'messages',
       });
-      const response = await llm.stream(text);
 
       // 流式请求处理
-      for await (const event of response) {
-        /**
-         * 流式请求处理
-         */
-        switch (event.type) {
-          case "ai":
-            // 流式请求显示
-            fullText += event.content;
-            setStreamingText(fullText);
-            break;
-        }
+      for await (const chunk of response) {
+        const [messageChunk, metadata] = chunk
+        fullText += messageChunk.content 
+        setStreamingText(fullText);  
       }
     } catch (error) {
       console.error("在handleSubmit中捕获到:", error)
