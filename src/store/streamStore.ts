@@ -9,6 +9,7 @@ export interface StreamState {
   addMessage: (message: ChatMessage) => void;
   updateStreamingText: (text: string) => void;
   setStreaming: (streaming: boolean) => void;
+  clearMessages: () => void;
 }
 
 export const useStreamStore = create<StreamState>((set) => ({
@@ -24,4 +25,5 @@ export const useStreamStore = create<StreamState>((set) => ({
   }),
   updateStreamingText: (text: string) => set({ streamingText: text }),
   setStreaming: (isStreaming: boolean) => set({ isStreaming }),
+  clearMessages: () => set({ messages: [], streamingText: "" }),
 }));
