@@ -20,21 +20,15 @@ export async function getAgent() {
     checkpointer,
     middleware: [createFileSystemMiddleware(), createMiddleware({
       name: "toolSync",
-      wrapModelCall: async (request, handler) => {
-        const response = await handler(request);
-        return response;
-      },
-      wrapToolCall: async (request, handler) => {
-        const response = await handler(request);
-        return response;
-      },
+      wrapModelCall: async (request, handler) => handler(request),
+      wrapToolCall: async (request, handler) => handler(request),
     })],
   });
 
 }
 
 
-export async function runAgent(text) {
+export async function runAgent(text: string) {
 
   const agent = await getAgent();
 
@@ -46,27 +40,28 @@ export async function runAgent(text) {
   });
 
   
-  let fullText = ""
-  const toolCalls = {}
+  let fullText = "";
+  const toolCalls: Record<string, any> = {};
   const transformed = stream.pipeThrough(
     new TransformStream({
       transform: (chunk, controller) => {
-        const [type ,chunkData] = chunk;
-        
-        if(type === 'messages'){
-          const [messageChunk, metadata] = chunkData;
+        const [type, chunkData] = chunk as [string, any];
+
+        if (type === 'messages') {
+          const [messageChunk] = chunkData as [any, any];
           /**
-           * 看增量数据的定义，此处只处理ai返回的内容，对tool等护士
+           * 看增量数据的定义，此处只处理ai返回的内容，对tool等忽略
            */
-          fullText += messageChunk.content
+          const content = messageChunk.content ?? "";
+          fullText += content;
           controller.enqueue({
-            type: "stream",// 流式请求更新
+            type: "stream", // 流式请求更新
             text: fullText
           });
-        }else if(type === 'updates'){
+        } else if (type === 'updates') {
           // 完整数据
           // 应该在外侧处理，此处仅负责数据的发送
-          fullText = ""
+          fullText = "";
           controller.enqueue({
             type: "stream",
             message:{
@@ -74,21 +69,21 @@ export async function runAgent(text) {
             }
           });
           // 针对ai 数据处理
-          (chunkData.model_request?.messages || []).forEach(message=>{
-            if(message.content){
+          (chunkData.model_request?.messages || []).forEach((message: any) => {
+            if (message.content) {
               controller.enqueue({
                 type: "message",
-                message:{
-                  type:message.type,
-                  content:message.content
+                message: {
+                  type: message.type,
+                  content: message.content
                 }
               });
             }
-            if(message.tool_call_chunks ){
+            if (message.tool_call_chunks) {
               // ai返回的tool信息的集合
-              message.tool_call_chunks .forEach(toolCall=>{
-                toolCalls[toolCall.id] = toolCall
-              })
+              message.tool_call_chunks.forEach((toolCall: any) => {
+                toolCalls[toolCall.id] = toolCall;
+              });
             }
           });
 
@@ -97,17 +92,17 @@ export async function runAgent(text) {
            * tools 应该先返回，然后慢慢执行
            * 我们这里偷懒
            */
-          (chunkData.tools?.messages || []).forEach(toolMessage=>{
-            const tool = toolCalls[toolMessage.tool_call_id ]
-            if(tool){
+          (chunkData.tools?.messages || []).forEach((toolMessage: any) => {
+            const tool = toolCalls[toolMessage.tool_call_id];
+            if (tool) {
               controller.enqueue({
                 type: "message",
-                message:{
-                  type:toolMessage.type,
-                  content:toolMessage.content,
-                  args : tool.args,
-                  id :tool.id,
-                  name :tool.name
+                message: {
+                  type: toolMessage.type,
+                  content: toolMessage.content,
+                  args: tool.args,
+                  id: tool.id,
+                  name: tool.name
                 }
               });
             }
