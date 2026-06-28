@@ -1,26 +1,35 @@
-import { Box, Text } from "ink";
 import React from "react";
+import { Box, Text } from "ink";
+import { useStreamStore } from "../store/streamStore";
 
-interface Props {
-    messages: ChatMessage[];
-    streamingText?: string;
-}
+
+
 
 export interface ChatMessage {
-    role: "user" | "assistant";
+    type: "user" | "ai" | "tool";
     content: string;
+    args?:any;
+    id?:string;
+    name?:string;
 }
 
-export function ChatView({ messages, streamingText }: Props) {
+
+
+export function ChatView() {
+    const { streamingText,  messages } = useStreamStore();
+    
+
     return (
         <Box flexDirection="column" paddingLeft={1}>
             {messages.map((msg, i) => (
                 <MessageBlock key={i} message={msg} />
             ))}
+
             {streamingText !== undefined && streamingText !== "" && (
                 <Box>
-                    <Text>
-                        {streamingText} --
+                    <Text color="green">流式数据:</Text>
+                    <Text color="green">
+                        {streamingText}
                     </Text>
                 </Box>
             )}
@@ -30,24 +39,29 @@ export function ChatView({ messages, streamingText }: Props) {
 
 
 function MessageBlock({ message }: { message: ChatMessage }) {
-    switch (message.role) {
+    switch (message.type) {
         case "user":
             return (
                 <Box marginBottom={0}>
                     <Text color="red">
-                        {message.content}
+                        【user】:{message.content}
                     </Text>
                 </Box>
             );
 
-        case "assistant":
+        case "ai":
             return (
                 <Box marginBottom={0}>
-                    <Text>{message.content}</Text>
+                    <Text color="blue">【AI】:{message.content}</Text>
                 </Box>
             );
 
-
+        case "tool":
+            return (
+                <Box marginBottom={0}>
+                    <Text color="white">【Tool】{message.name}:{message.args}</Text>
+                </Box>
+            );
         default:
             return null;
     }

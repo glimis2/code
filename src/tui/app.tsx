@@ -2,9 +2,9 @@ import 'dotenv/config';
 import React, { useState } from 'react';
 import { render, Text, Box, useInput, useApp } from 'ink';
 import TextInput from 'ink-text-input';
-import { ChatView, ChatMessage } from './chat.tsx'
-import { initChatModel } from 'langchain';
-import { getAgent } from '../agent/agent.ts';
+import { ChatView } from './chat.tsx'
+import { runAgent } from '../agent/agent.ts';
+import { useStreamStore } from '../store/streamStore.ts';
 
 const QWEN_LOGO = `
  ██╗   ██╗ ██████╗ ██╗   ██╗
@@ -18,11 +18,9 @@ const QWEN_LOGO = `
 export function App() {
   const [value, setValue] = useState('');
   const { exit } = useApp();
-  // 流式请求数据
-  let fullText = ""
-  const [streamingText, setStreamingText] = useState("");
-  // 历史数据
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  // Zustand 流式状态
+  const { streamingText, updateStreamingText ,addMessage} = useStreamStore();
 
   // 退出
   useInput((_input, key) => {
@@ -37,35 +35,26 @@ export function App() {
         setValue('');
       }
 
-      // 获取主agent
-      const agent = await getAgent();
-
-      
-      // 拼接信息
-      setMessages((prev) => [...prev, { role: "user", content: text }]);
-
-      const response = await agent.stream({
-        messages: [{ role: "user", content: text }],
-      },{
-        streamMode: 'messages',
-        configurable: { thread_id: "default-thread" },
+    
+      const response = await runAgent(text);
+      addMessage({
+        type:"user",
+        content:text
       });
-
-      // 流式请求处理
-      for await (const chunk of response) {
-        const [messageChunk, metadata] = chunk
-        fullText += messageChunk.content 
-        setStreamingText(fullText);  
+      for await (const event of response) {
+        switch (event.type) {
+          case "stream_text":
+            updateStreamingText(event.message.text );
+            break;
+          case "message":
+            addMessage(event.message);
+            break;
+        }
       }
-
-      setStreamingText("");  
-      setMessages((prev) => [...prev, { role: "assistant", content: fullText }]);
-
     } catch (error) {
-      console.error("在handleSubmit中捕获到:", error)
-    }
-
-  }
+      console.error("在handleSubmit中捕获到:", error);
+    } 
+  };
 
 
   return (
@@ -103,10 +92,7 @@ export function App() {
 
 
 
-      <ChatView
-        messages = {messages}
-        streamingText={streamingText}
-      />
+      <ChatView />
 
       <Box marginTop={1} paddingLeft={1}>
         <Text color="magenta bold">{'> '}</Text>

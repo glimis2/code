@@ -3,7 +3,9 @@
     "allow": [
       "Bash(pnpm add *)",
       "WebFetch(langchain-ai.github.io)",
-      "Bash(pnpm list *)"
+      "Bash(pnpm list *)",
+      "WebFetch(js.langchain.com)",
+      "Bash(rmdir *)"
     ]
   },
   "$version": 4
