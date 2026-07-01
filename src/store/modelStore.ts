@@ -1,32 +1,5 @@
 import { create } from 'zustand';
-
-export interface ModelConfig {
-  name: string;
-  provider: string;
-  baseUrl: string;
-  apiKey: string;
-}
-
-export const DEFAULT_MODELS: ModelConfig[] = [
-  {
-    name: "qwen-max",
-    provider: "openai",
-    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    apiKey: "",
-  },
-  {
-    name: "qwen-plus",
-    provider: "openai",
-    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    apiKey: "",
-  },
-  {
-    name: "qwen-turbo",
-    provider: "openai",
-    baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-    apiKey: "",
-  },
-];
+import { ModelConfig, getCurrentModelName, setCurrentModelName, getModelConfig, AVAILABLE_MODELS } from '../config';
 
 export interface ModelState {
   currentModel: ModelConfig;
@@ -38,43 +11,38 @@ export interface ModelState {
   getAvailableModelNames: () => string[];
 }
 
-export const useModelStore = create<ModelState>((set, get) => ({
-  currentModel: DEFAULT_MODELS[0],
-  availableModels: DEFAULT_MODELS,
+export const useModelStore = create<ModelState>((set, get) => {
+  const initialName = getCurrentModelName();
+  const initialModel = getModelConfig(initialName);
 
-  setCurrentModel: (model: ModelConfig | string) => {
-    const { availableModels } = get();
-    const targetModel = typeof model === 'string'
-      ? availableModels.find(m => m.name === model)
-      : model;
+  return {
+    currentModel: initialModel,
+    availableModels: AVAILABLE_MODELS,
 
-    if (targetModel) {
-      set({ currentModel: targetModel });
-    } else {
-      console.warn(`Model "${typeof model === 'string' ? model : model.name}" not found`);
-    }
-  },
+    setCurrentModel: (model: ModelConfig | string) => {
+      const name = typeof model === 'string' ? model : model.name;
+      setCurrentModelName(name);
+      set({ currentModel: getModelConfig(name) });
+    },
 
-  addModel: (model: ModelConfig) => {
-    set((state) => ({
-      availableModels: [...state.availableModels, model],
-    }));
-  },
+    addModel: (model: ModelConfig) => {
+      set((state) => ({
+        availableModels: [...state.availableModels, model],
+      }));
+    },
 
-  removeModel: (modelName: string) => {
-    set((state) => {
-      const newModels = state.availableModels.filter(m => m.name !== modelName);
-      const newCurrentModel = state.currentModel.name === modelName
-        ? (newModels.length > 0 ? newModels[0] : state.currentModel)
-        : state.currentModel;
-      return {
-        availableModels: newModels,
-        currentModel: newCurrentModel,
-      };
-    });
-  },
+    removeModel: (modelName: string) => {
+      set((state) => {
+        const newModels = state.availableModels.filter(m => m.name !== modelName);
+        const newCurrentModel = state.currentModel.name === modelName
+          ? (newModels.length > 0 ? newModels[0] : state.currentModel)
+          : state.currentModel;
+        return { availableModels: newModels, currentModel: newCurrentModel };
+      });
+    },
 
-  getAvailableModelNames: () => {
-    return get().availableModels.map(m => m.name);
-  },
-}));
+    getAvailableModelNames: () => {
+      return get().availableModels.map(m => m.name);
+    },
+  };
+});

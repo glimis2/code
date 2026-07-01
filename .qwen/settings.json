@@ -5,7 +5,8 @@
       "WebFetch(langchain-ai.github.io)",
       "Bash(pnpm list *)",
       "WebFetch(js.langchain.com)",
-      "Bash(rmdir *)"
+      "Bash(rmdir *)",
+      "mcp__context7__resolve-library-id"
     ]
   },
   "$version": 4

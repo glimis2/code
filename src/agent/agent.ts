@@ -2,20 +2,20 @@ import 'dotenv/config';
 import { createAgent, createMiddleware, initChatModel } from 'langchain';
 import { MemorySaver } from "@langchain/langgraph-checkpoint";
 import { createFileSystemMiddleware } from '../middleware/fileSystemMiddleware.js';
-import { useModelStore } from '../store/modelStore';
+import { getModelConfig } from '../config';
 
 
 const checkpointer = new MemorySaver();
 
 export async function getAgent() {
-  const { currentModel } = useModelStore.getState();
+  const currentModel = getModelConfig();
 
   const llm = await initChatModel(currentModel.name, {
     modelProvider: currentModel.provider,
     configuration: {
       baseURL: currentModel.baseUrl,
     },
-    apiKey: currentModel.apiKey || process.env.LLM_API_KEY,
+    apiKey: currentModel.apiKey,
   });
   
   return createAgent({

@@ -6,7 +6,7 @@ import { useStreamStore } from "../store/streamStore";
 
 
 export interface ChatMessage {
-    type: "user" | "ai" | "tool";
+    type: "user" | "ai" | "tool"| "tui";
     content: string;
     args?:any;
     id?:string;
@@ -60,6 +60,12 @@ function MessageBlock({ message }: { message: ChatMessage }) {
             return (
                 <Box marginBottom={0}>
                     <Text color="white">【Tool】{message.name}:{message.args}</Text>
+                </Box>
+            );
+        case "tui":
+            return (
+                <Box marginBottom={0}>
+                    <Text color="white">【TUI】{message.name}:{message.args}</Text>
                 </Box>
             );
         default:

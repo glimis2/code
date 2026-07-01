@@ -5,25 +5,26 @@ export interface StreamState {
   messages: ChatMessage[];
   streamingText: string;
   isStreaming: boolean;
+  errorMessage: string;
 
   addMessage: (message: ChatMessage) => void;
   updateStreamingText: (text: string) => void;
   setStreaming: (streaming: boolean) => void;
   clearMessages: () => void;
+  setError: (error: string) => void;
 }
 
 export const useStreamStore = create<StreamState>((set) => ({
-  // 流式请求
   streamingText: '',
-  // 历史记录
-  messages:[],
-
+  messages: [],
+  errorMessage: "",
   isStreaming: false,
-  
+
   addMessage: (message: ChatMessage) => set((state) => {
-    return { messages: [...state.messages, message],streamingText:"" }
+    return { messages: [...state.messages, message], streamingText: "" }
   }),
+  setError: (error: string) => set({ errorMessage: error }),
   updateStreamingText: (text: string) => set({ streamingText: text }),
   setStreaming: (isStreaming: boolean) => set({ isStreaming }),
-  clearMessages: () => set({ messages: [], streamingText: "" }),
+  clearMessages: () => set({ messages: [], streamingText: "", errorMessage: "" }),
 }));
